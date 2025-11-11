@@ -3,6 +3,7 @@
 #--------------------------------------------------------------------------------------------------------------------
 import transformers, torch
 import csv, os
+from utils import read_prompts_from_csv, read_prompts_from_txt
 
 os.environ["CUDA_VISIBLE_DEVICES"]= "0"
 
@@ -12,26 +13,7 @@ pipeline = transformers.pipeline(
     "text-generation", model=model_id, model_kwargs={"dtype": torch.float16}, device_map="auto")
 pipeline.model.eval()
 
-def read_prompts_from_csv(file_path):
-    prompts = []
-    with open(file_path, newline='', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            prompts.append(row[0])
-    return prompts
-
-def read_prompts_from_txt(file_path):
-    prompts = []
-    with open(file_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith('"') and line.endswith('"'):
-                line = line[1:-1]
-            prompts.append(line.strip())
-                
-    return prompts
-
-def get_llm_response(prompt):
+def get_llm_a_response(prompt):
     instruction = '이 질문에 대한 답변을 4~5문장 이내로 한국어로 완전하게 작성해줘.'
 
     messages = [
@@ -76,6 +58,6 @@ if __name__ == "__main__":
 
     with open(output_path, 'w', encoding='utf-8') as out_f:
         for prompt in prompts:
-            answer = get_llm_response(prompt)
+            answer = get_llm_a_response(prompt)
             print(f"Prompt: {prompt}\nResponse: {answer}\n")
             out_f.write(f"{{prompt:{prompt}, response_a:{answer}}}\n")

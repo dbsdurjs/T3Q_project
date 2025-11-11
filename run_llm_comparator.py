@@ -28,7 +28,7 @@ vertexai.init(
 )
 
 # 프로젝트 ID와 지역 명시
-MODEL_ID = "llama-3.1-8b-instruct-maas"
+MODEL_ID = "llama-3.1-70b-instruct-maas"
 # vertexai.init(project="army-class2", location="asia-northeast3")
 inputs = [
     {'prompt': 'how are you?', 'response_a': 'good', 'response_b': 'bad'},

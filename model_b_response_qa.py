@@ -3,7 +3,7 @@
 #--------------------------------------------------------------------------------------------------------------------
 import csv, os
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
+from utils import read_prompts_from_csv, read_prompts_from_txt
 os.environ["CUDA_VISIBLE_DEVICES"]= "1"
 # Load model and tokenizer
 model_id = "LiquidAI/LFM2-2.6B"
@@ -14,26 +14,7 @@ model = AutoModelForCausalLM.from_pretrained(
 #    attn_implementation="flash_attention_2" <- uncomment on compatible GPU
 )
 
-def read_prompts_from_csv(file_path):
-    prompts = []
-    with open(file_path, newline='', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            prompts.append(row[0])
-    return prompts
-
-def read_prompts_from_txt(file_path):
-    prompts = []
-    with open(file_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith('"') and line.endswith('"'):
-                line = line[1:-1]
-            prompts.append(line.strip())
-                
-    return prompts
-
-def get_llm_response(prompt):
+def get_llm_b_response(prompt):
 
     tokenizer = AutoTokenizer.from_pretrained(model_id)
 
@@ -56,7 +37,6 @@ def get_llm_response(prompt):
         max_new_tokens=512,
     )
     generated_ids = output[0][input_ids.shape[-1]:]  # 입력 길이 이후만 추출
-    # print(tokenizer.decode(generated_ids, skip_special_tokens=True))
 
     return tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
 
@@ -73,6 +53,6 @@ if __name__ == "__main__":
 
     with open(output_path, 'w', encoding='utf-8') as out_f:
         for prompt in prompts:
-            answer = get_llm_response(prompt)
+            answer = get_llm_b_response(prompt)
             print(f"Prompt: {prompt}\nResponse: {answer}\n")
             out_f.write(f"{{prompt:{prompt}, response_b:{answer}}}\n")

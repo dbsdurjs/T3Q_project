@@ -23,8 +23,10 @@ def run_tab1(switch_tab):
             st.warning("최소 하나의 키워드를 입력하세요.")
         else:
             with st.spinner("클러스터링 데이터 로드 중..."):
-                sentence_embeddings, result_cluster = qa_cluster.main()
-
+                sentence_embeddings, result_cluster, all_questions = qa_cluster.main()
+                st.session_state["sentence_embeddings"] = sentence_embeddings
+                st.session_state["labels"] = result_cluster
+                st.session_state["all_questions"] = all_questions
             with st.spinner("유사도 계산 중..."):
                 sims = choice_cluster.compute_defense_similarity(
                     keywords, sentence_embeddings, result_cluster
@@ -68,13 +70,13 @@ def run_tab1(switch_tab):
                 item = bl[sel_idx]
                 kw, c, sc = item["keyword"], int(item["cluster"]), float(item["score"])
 
-                # 필요한 최소한만 세션에 저장 (탭2에서 바로 사용)
-                st.session_state["kw_best_selected"] = {kw: c}   # {'keyword': number cluster}
+                # st.session_state["kw_best_selected"] = {kw: c}   # {'keyword': number cluster}
                 st.session_state["kw_best_item"] = {"keyword": kw, "cluster": c, "score": sc}
 
                 st.success(f"선택 확정: {kw} → Cluster {c} (score={sc:.4f})")
 
                 # 탭 전환
                 switch_tab("샘플링")
+
     else:
         st.info("먼저 키워드를 제출해 주세요.")

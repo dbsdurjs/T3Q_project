@@ -1,21 +1,39 @@
 #--------------------------------------------------------------------------------------------------------------------
 # model name : Qwen/Qwen3-8B
 #--------------------------------------------------------------------------------------------------------------------
-import csv, os
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from utils import read_prompts_from_csv, read_prompts_from_txt
-os.environ["CUDA_VISIBLE_DEVICES"]= "1"
+
+# 물리 GPU 1번 사용 (없으면 CPU)
+if torch.cuda.is_available() and torch.cuda.device_count() > 1:
+    device_b = torch.device("cuda:1")
+elif torch.cuda.is_available():
+    device_b = torch.device("cuda:0")
+else:
+    device_b = torch.device("cpu")
+
 # Load model and tokenizer
 model_id = "LiquidAI/LFM2-2.6B"
-model = AutoModelForCausalLM.from_pretrained(
-    model_id,
-    device_map="auto",
-    dtype="bfloat16",
-#    attn_implementation="flash_attention_2" <- uncomment on compatible GPU
-)
+_model_b = None
+_tokenizer_b = None
+
+def get_model_b():
+    global _model_b, _tokenizer_b
+    if _model_b is None:
+        _tokenizer_b = AutoTokenizer.from_pretrained(model_id)
+        _model_b = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            dtype=torch.bfloat16 if device_b.type == "cuda" else torch.float32,
+            low_cpu_mem_usage=False,
+            device_map=None,
+        )
+        _model_b.to(device_b)
+        _model_b.eval()
+    return _model_b, _tokenizer_b
 
 def get_llm_b_response(prompt):
-
+    model, tokenizer = get_model_b()
     tokenizer = AutoTokenizer.from_pretrained(model_id)
 
     # Generate answer

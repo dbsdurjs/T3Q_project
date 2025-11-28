@@ -28,9 +28,9 @@ tab1, tab2, tab3, tab4 = st.tabs([
 with tab1:
     run_tab1(switch_tab)
 with tab2:
-    run_tab2()
+    run_tab2(switch_tab)
 with tab3:
-    run_tab3()
+    run_tab3(switch_tab)
 # with tab4:
 #     run_tab4()
 

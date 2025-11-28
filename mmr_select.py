@@ -1,4 +1,7 @@
-def mmr_select(
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+
+def mmr_(
     X,                    # (N, D) 후보(선택된 클러스터 내부) 임베딩
     kw_embs,              # (K, D) 하위 키워드 임베딩
     n_samples=50,

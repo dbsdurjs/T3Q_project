@@ -100,7 +100,7 @@ def main():
     visualize_clusters(sentence_embeddings, labels, num_clusters, cluster_to_domain)
     # representative_questions(sentence_embeddings, labels, num_clusters, all_questions, cluster_to_domain, kmeans)
 
-    return sentence_embeddings, labels
+    return sentence_embeddings, labels, all_questions
 
 if __name__ == "__main__":
     _, _ = main()

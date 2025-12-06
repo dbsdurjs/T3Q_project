@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from web.tab1_keyword_analysis import run_tab1
 from web.tab2_sampling import run_tab2
 from web.tab3_eval_dataste import run_tab3
+from web.tab4_run_lc import run_tab4
 from streamlit.components.v1 import html
 
 def switch_tab(tab_label: str):
@@ -20,6 +21,8 @@ def switch_tab(tab_label: str):
     """, height=0, width=0)
 
 plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams['axes.unicode_minus'] = False
+
 st.title("평가 데이터셋 생성 및 LLM 평가")
 
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -31,6 +34,6 @@ with tab2:
     run_tab2(switch_tab)
 with tab3:
     run_tab3(switch_tab)
-# with tab4:
-#     run_tab4()
+with tab4:
+    run_tab4()
 

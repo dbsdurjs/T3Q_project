@@ -56,7 +56,7 @@ def get_llm_b_response(prompt):
     )
     generated_ids = output[0][input_ids.shape[-1]:]  # 입력 길이 이후만 추출
 
-    return tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
+    return tokenizer.decode(generated_ids, skip_special_tokens=True).strip(), model_id
 
 if __name__ == "__main__":
     file_path = "./defense_questions_snunlp.txt"

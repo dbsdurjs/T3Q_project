@@ -3,6 +3,7 @@ from model_a_response_qa import get_llm_a_response   # 여기서는 "배치 리�
 from model_b_response_qa import get_llm_b_response
 import pandas as pd
 import json
+from datetime import datetime
 
 def run_tab3(switch_tab):
     st.subheader("LLM 결과 생성")
@@ -38,13 +39,13 @@ def run_tab3(switch_tab):
         results_a = []
         results_b = []
         with st.spinner("모델 A/B 실행 중..."):
-            print(eval_prompts)
+            # print(eval_prompts)
             for prompt in eval_prompts:
-                print(f"Processing prompt: {prompt}")
-                answers_a = get_llm_a_response(prompt)
-                answers_b = get_llm_b_response(prompt)
-                print(f"Model A answers: {answers_a}")
-                print(f"Model B answers: {answers_b}")
+                # print(f"Processing prompt: {prompt}")
+                answers_a, a_model_name = get_llm_a_response(prompt)
+                answers_b, b_model_name = get_llm_b_response(prompt)
+                # print(f"Model A answers: {answers_a}")
+                # print(f"Model B answers: {answers_b}")
                 results_a.append({"prompt": prompt, "response_a": answers_a})
                 results_b.append({"prompt": prompt, "response_b": answers_b})
 
@@ -58,7 +59,10 @@ def run_tab3(switch_tab):
         st.session_state["tab3_df_b"] = df_b
 
         st.success(f"생성 완료! (총 {len(df)}개)")
-
+    
+    a_model_name = "Model A"
+    b_model_name = "Model B"
+    
     # 여기서 세션에 결과가 없으면(아직 실행 전이면) 그냥 종료
     if st.session_state["tab3_df"] is None:
         return
@@ -79,49 +83,50 @@ def run_tab3(switch_tab):
         st.dataframe(preview)
 
     # === 다운로드용 변환 ===
-    merged_records = []
+    # 1) metadata
+    metadata = {
+        "A_model_name": f"{a_model_name}",
+        "B_model_name": f"{b_model_name}",
+        "created_at": datetime.now().isoformat(),
+        "num_examples": len(df),
+    }
+
+    # 2) models: LLM 이름을 알고 있으면 여기 넣어도 됨
+    models = [
+        {"name": f"{a_model_name}"},   # 예: "MLP-KTLim/llama-3-korean-bllossom-8b"
+        {"name": f"{b_model_name}"},   # 예: "LiquidAI/LFM2-2.6B"
+    ]
+
+    # 3) examples
+    examples = []
     for _, row in df.iterrows():
-        merged_records.append({
-            "prompt": row.get("prompt", ""),
-            "response_a": row.get("response_a", ""),
-            "response_b": row.get("response_b", "")
+        examples.append({
+            "input_text": row.get("prompt", ""),
+            "output_text_a": row.get("response_a", ""),
+            "output_text_b": row.get("response_b", ""),
+            "score": 0.0,  # 아직 judge를 안 했으니 0으로 두거나, 나중에 갱신
         })
 
-    json_array_bytes = json.dumps(
-        merged_records, ensure_ascii=False, indent=2
+    comparator_payload = {
+        "metadata": metadata,
+        "models": models,
+        "examples": examples,
+    }
+
+    comparator_json_bytes = json.dumps(
+        comparator_payload,
+        ensure_ascii=False,
+        indent=2,
     ).encode("utf-8")
 
-    jsonl_lines = "\n".join([
-        json.dumps(r, ensure_ascii=False) for r in merged_records
-    ]).encode("utf-8")
-
-    txt_lines = "\n".join([
-        f"{{prompt:{r['prompt']}, response_a:{r.get('response_a','')}, response_b:{r.get('response_b','')}}}"
-        for r in merged_records
-    ]).encode("utf-8")
-
-    col_d1, col_d2, col_d3 = st.columns(3)
-    with col_d1:
-        st.download_button(
-            "⬇️ 병합 JSON (배열)",
-            data=json_array_bytes,
-            file_name="llm_AB_merge.json",
-            mime="application/json"
-        )
-    with col_d2:
-        st.download_button(
-            "⬇️ 병합 JSONL",
-            data=jsonl_lines,
-            file_name="llm_AB_merge.jsonl",
-            mime="application/json"
-        )
-    with col_d3:
-        st.download_button(
-            "⬇️ 병합 TXT (기존 포맷)",
-            data=txt_lines,
-            file_name="llm_AB_merge.txt",
-            mime="text/plain"
-        )
+    st.session_state["comparator_payload"] = comparator_payload
+    # === 다운로드 버튼 ===
+    st.download_button(
+        "⬇️ LLM Comparator JSON",
+        data=comparator_json_bytes,
+        file_name="llm_comparator_input.json",
+        mime="application/json",
+    )
 
     if st.button("LLM Comparator로 이동"):
         switch_tab("LLM Comparator 실행")

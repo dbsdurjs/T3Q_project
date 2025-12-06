@@ -52,7 +52,7 @@ def get_llm_a_response(prompt):
     )
     response = outputs[0]['generated_text'][len(prompt):]
    
-    return response.strip()
+    return response.strip(), model_id
 
 
 if __name__ == "__main__":

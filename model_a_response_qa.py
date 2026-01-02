@@ -25,34 +25,53 @@ def get_pipeline_a():
 def get_llm_a_response(prompt):
     pipeline = get_pipeline_a()
     instruction = '이 질문에 대한 답변을 4~5문장 이내로 한국어로 완전하게 작성해줘.'
-
-    messages = [
-        {"role" : "system", "content" : f"{prompt}"},
-        {"role" : "user", "content" : f"{instruction}"}
-    ]
-
-    prompt = pipeline.tokenizer.apply_chat_template(
-        messages, 
-        tokenize=False, 
-        add_generation_prompt=True
-    )
+    
+    # 🔹 입력 타입 처리
+    single_input = False
+    if isinstance(prompt, str):
+        prompts = [prompt]
+        single_input = True
+    elif isinstance(prompt, list):
+        prompts = prompt
+    else:
+        raise ValueError("prompt must be string or list of strings")
 
     terminators = [
         pipeline.tokenizer.eos_token_id,
         pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")
     ]
+    
+    responses = []
+    for p in prompts:
+        messages = [
+            {"role" : "system", "content" : f"{p}"},
+            {"role" : "user", "content" : f"{instruction}"}
+        ]
+        
+        formatted = pipeline.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True
+        )
+        
+        outputs = pipeline(
+            formatted,
+            max_new_tokens=2048,
+            eos_token_id=terminators,
+            do_sample=True,
+            temperature=0.6,
+            top_p=0.9
+        )
+        
+        response = outputs[0]['generated_text'][len(formatted):]
+        responses.append(response.strip())
+    
+    # 🔹 return 타입 구분
+    if single_input:
+        return responses[0], model_id
+    else:
+        return responses, model_id
 
-    outputs = pipeline(
-        prompt,
-        max_new_tokens=2048,
-        eos_token_id=terminators,
-        do_sample=True,
-        temperature=0.6,
-        top_p=0.9
-    )
-    response = outputs[0]['generated_text'][len(prompt):]
-   
-    return response.strip(), model_id
 
 
 if __name__ == "__main__":

@@ -80,3 +80,49 @@ def run_tab1(switch_tab):
 
     else:
         st.info("먼저 키워드를 제출해 주세요.")
+
+    # =============================
+    # 📌 Baseline: Random Sampling
+    # =============================
+    st.markdown("---")
+    st.subheader("📌 Baseline: 무작위 샘플링 실행")
+
+    # 샘플 개수 설정 UI
+    baseline_n = st.number_input(
+        "무작위로 선택할 샘플 개수",
+        min_value=5,
+        max_value=200,
+        value=20,
+        step=1,
+        key="baseline_sample_count"
+    )
+
+    # 버튼 생성
+    if st.button("🔀 전체 데이터에서 랜덤 샘플링 실행"):
+        all_questions = st.session_state.get("all_questions", None)
+
+        if all_questions is None:
+            st.warning("⚠ 먼저 키워드 분석을 실행하여 데이터를 불러오세요.")
+        else:
+            # np 선택
+            rng = np.random.default_rng()   # 원하는 경우 seed 가능
+
+            rand_idx = rng.choice(
+                len(all_questions),
+                size=baseline_n,
+                replace=False
+            )
+            rand_samples = [all_questions[i] for i in rand_idx]
+
+            # session 저장
+            st.session_state["baseline_prompts"] = rand_samples
+            st.session_state["baseline_sample_indices"] = rand_idx.tolist()
+            st.session_state["baseline_ready"] = True
+
+            st.success(f"랜덤 샘플링 완료! {baseline_n}개 질문 선택됨 → Tab3에서 사용 가능")
+
+            # 미리보기 표시
+            st.write("📌 무작위로 선택된 질문 Preview:")
+            preview_df = pd.DataFrame({"Random Sample": rand_samples})
+            st.dataframe(preview_df.head(10))
+

@@ -5,6 +5,12 @@ import pandas as pd
 import json
 from datetime import datetime
 
+def empty_memory():
+    # === LLM 사용 후 GPU 해제 ===
+    import torch, gc
+    gc.collect()            # 파이썬 객체 제거
+    torch.cuda.empty_cache()  # GPU 캐시 해제
+
 def run_tab3(switch_tab):
     st.subheader("LLM 결과 생성")
 
@@ -39,15 +45,16 @@ def run_tab3(switch_tab):
         results_a = []
         results_b = []
         with st.spinner("모델 A/B 실행 중..."):
-            # print(eval_prompts)
-            for prompt in eval_prompts:
-                # print(f"Processing prompt: {prompt}")
-                answers_a, a_model_name = get_llm_a_response(prompt)
-                answers_b, b_model_name = get_llm_b_response(prompt)
-                # print(f"Model A answers: {answers_a}")
-                # print(f"Model B answers: {answers_b}")
-                results_a.append({"prompt": prompt, "response_a": answers_a})
-                results_b.append({"prompt": prompt, "response_b": answers_b})
+            answers_list_a, a_model_name = get_llm_a_response(eval_prompts)
+            answers_list_b, b_model_name = get_llm_b_response(eval_prompts)
+
+            results_a = []
+            results_b = []
+            for prompt, ans_a, ans_b in zip(eval_prompts, answers_list_a, answers_list_b):
+                results_a.append({"prompt": prompt, "response_a": ans_a})
+                results_b.append({"prompt": prompt, "response_b": ans_b})
+
+            empty_memory()
 
         # === DataFrame 변환 ===
         df_a = pd.DataFrame(results_a)  # columns: prompt, response_a

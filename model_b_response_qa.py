@@ -33,30 +33,51 @@ def get_model_b():
     return _model_b, _tokenizer_b
 
 def get_llm_b_response(prompt):
+    # get_model_b() 안에서 이미 model, tokenizer를 로드했다고 가정
     model, tokenizer = get_model_b()
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    instruction = "이 질문에 대한 답변을 4~5문장 이내로 한국어로 완전하게 작성해줘."
 
-    # Generate answer
-    full_prompt = f"{prompt}. 이 질문에 대한 답변을 4~5문장 이내로 한국어로 완전하게 작성해줘."
+    # 🔹 입력 타입 처리: str / list 모두 지원
+    single_input = False
+    if isinstance(prompt, str):
+        prompts = [prompt]
+        single_input = True
+    elif isinstance(prompt, list):
+        prompts = prompt
+    else:
+        raise ValueError("prompt must be string or list of strings")
 
-    input_ids = tokenizer.apply_chat_template(
-        [{"role": "user", "content": full_prompt}],
-        add_generation_prompt=True,
-        return_tensors="pt",
-        tokenize=True,
-    ).to(model.device)
+    responses = []
 
-    output = model.generate(
-        input_ids,
-        do_sample=True,
-        temperature=0.3,
-        min_p=0.15,
-        repetition_penalty=1.05,
-        max_new_tokens=512,
-    )
-    generated_ids = output[0][input_ids.shape[-1]:]  # 입력 길이 이후만 추출
+    for p in prompts:
+        full_prompt = f"{p}. {instruction}"
 
-    return tokenizer.decode(generated_ids, skip_special_tokens=True).strip(), model_id
+        input_ids = tokenizer.apply_chat_template(
+            [{"role": "user", "content": full_prompt}],
+            add_generation_prompt=True,
+            return_tensors="pt",
+            tokenize=True,
+        ).to(model.device)
+
+        output = model.generate(
+            input_ids,
+            do_sample=True,
+            temperature=0.3,
+            min_p=0.15,
+            repetition_penalty=1.05,
+            max_new_tokens=512,
+        )
+
+        generated_ids = output[0][input_ids.shape[-1]:]  # 입력 부분 이후만 추출
+        text = tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
+        responses.append(text)
+
+    # 🔹 입력 타입에 맞게 반환
+    if single_input:
+        return responses[0], model_id
+    else:
+        return responses, model_id
+
 
 if __name__ == "__main__":
     file_path = "./defense_questions_snunlp.txt"

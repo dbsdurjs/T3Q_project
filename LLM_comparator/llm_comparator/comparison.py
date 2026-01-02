@@ -80,6 +80,13 @@ def run(
   clusters, cluster_similarities = clusterer.run(
       bullets, **(clusterer_opts or {})
   )
+  # ⭐ bullets를 judgements에 병합
+  for judgement, bullet_list in zip(judgements, bullets):
+      # bullet_list는 해당 example의 bullets 리스트
+      # judgement['individual_rater_scores']의 각 rater에 bullets 추가
+      if 'individual_rater_scores' in judgement:
+          for rater_score in judgement['individual_rater_scores']:
+              rater_score['rationale_bullets'] = bullet_list
 
   per_example_generator = zip(inputs, judgements, cluster_similarities)
 
@@ -162,6 +169,8 @@ def show_in_vscode(
   if web_dir is None:
     # 기본 경로들 시도
     possible_paths = [
+        '/home/gpuadmin/kim/llm_com/llm-comparator/data',
+        '/home/gpuadmin/kim/llm_com/llm-comparator/python/src/llm_comparator/data',
         pathlib.Path(__file__).parent / 'data',
     ]
     

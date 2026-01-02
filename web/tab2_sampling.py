@@ -109,6 +109,17 @@ def run_tab2(switch_tab):
         st.session_state["mmr_done"] = True
 
     if st.session_state.get("mmr_done"):
-        st.info("MMR 샘플링이 완료되었습니다. 평가 데이터셋 만들기 탭으로 이동할 수 있습니다.")
-        if st.button("평가 데이터셋 만들기로 이동"):
-            switch_tab("평가 데이터셋 만들기")
+        st.info("MMR 샘플링이 완료되었습니다. 평가 데이터셋 만들기 또는 샘플 비교가 가능합니다.")
+
+        col1, col2 = st.columns(2)
+
+        # 🔹 Tab3으로 보내는 버튼
+        with col1:
+            if st.button("➡️ 평가 데이터셋 만들기 (Tab3 이동)"):
+                switch_tab("평가 데이터셋 만들기")
+
+        # 🔹 Tab2-1으로 보내는 버튼
+        with col2:
+            if st.button("📊 샘플링 품질 비교 보기 (Tab2-1 이동)"):
+                switch_tab("비교분석")
+
